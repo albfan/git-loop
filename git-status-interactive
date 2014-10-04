@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#set -x
+
+#TODO filter status files
+
+#    X          Y     Meaning
+#    -------------------------------------------------
+#              [MD]   not updated
+#    M        [ MD]   updated in index
+#    A        [ MD]   added to index
+#    D         [ M]   deleted from index
+#    R        [ MD]   renamed in index
+#    C        [ MD]   copied in index
+#    [MARC]           index and work tree matches
+#    [ MARC]     M    work tree changed since index
+#    [ MARC]     D    deleted in work tree
+#    -------------------------------------------------
+#    D           D    unmerged, both deleted
+#    A           U    unmerged, added by us
+#    U           D    unmerged, deleted by them
+#    U           A    unmerged, added by them
+#    D           U    unmerged, deleted by us
+#    A           A    unmerged, both added
+#    U           U    unmerged, both modified
+#    -------------------------------------------------
+#    ?           ?    untracked
+#    !           !    ignored
+#    -------------------------------------------------
+
+#TODO: Options for seeing ignored files
+#TODO: Options for filter results
+#TODO: Options to move around dirs
+
+QUIT="quit"
+PS3=" files>"
+select FILE in $(git status --porcelain | cut -c4-) "$QUIT"
+do
+   if [ "$REPLY" == "$QUIT" ] || [ "$FILE" == "$QUIT" ]
+   then
+      break
+   fi
+
+   if [ -d $FILE ]
+   then
+       echo "   listing files in ($FILE)"
+      PS3=" dir>"
+      select DIRFILE in $(ls -1 $FILE) "$QUIT"
+      do
+         if [ "$REPLY" == "$QUIT" ] || [ "$DIRFILE" == "$QUIT" ]
+         then
+            break
+         fi
+         less $FILE/$DIRFILE
+      done
+   else
+      echo "   actions for ($FILE)"
+      PS3=" action>"
+      options=("diff" "diff --cached" "add" "rm" "reset" "checkout")
+      select ACTION in "${options[@]}" "$QUIT"
+      do
+         if [ "$REPLY" == "$QUIT" ] || [ "$ACTION" == "$QUIT" ]
+         then
+            break
+         fi
+         git $ACTION $FILE
+      done
+   fi
+   PS3=" files>"
+done
