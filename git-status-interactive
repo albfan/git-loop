@@ -52,12 +52,17 @@ function doAction() {
        then
            git reset $FILE
        fi
-       if [ "$ACTION" == "less" ]
+       GIT=git
+       if [ "$ACTION" == "less" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
        then
-           $ACTION $FILE
-       else
-           git $ACTION $FILE &>/dev/null
+           GIT=
        fi
+       OUT=
+       if ! [[ "$ACTION" =~ "diff" ]]
+       then
+           OUT=&>/dev/null
+       fi
+       $GIT $ACTION $FILE $OUT
        if ! [[ "$ACTION" =~ "diff" ]]
        then
            break
@@ -80,7 +85,7 @@ IFS=$SELECT_IFS
 while(true)
 do
    echo
-   select STATUSLINE in $(git status --porcelain) "$QUIT"
+   select STATUSLINE in $(git status --porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') "$QUIT"
    do
        if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
        then
@@ -88,12 +93,13 @@ do
            exit 0
        fi
        IFS=$OLDIFS
+       STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
        FILE=$(echo "$STATUSLINE" | cut -c4-)
        INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
        WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
    
        echo
-       if [ -d $FILE ]
+       if [ -d "$FILE" ]
        then
            echo "listing files in ($FILE)"
            echo
@@ -134,6 +140,8 @@ do
                elif [ "$WORKTREE_STATUS" == "?" ]
                then
                    ACTIONS+=("add")
+                   ACTIONS+=("rm")
+                   ACTIONS+=("less")
                elif [ "$WORKTREE_STATUS" == "!" ]
                then
                    #TODO: Show ignore pattern causing this
