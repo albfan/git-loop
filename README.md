@@ -34,24 +34,59 @@ Optional: create an easier alias
 Use it:
 
     $ git status-interactive #or git statusi
-    1) file1
-    2) dir
+
+    1)  M file1
+    2) ?? dir
     3) quit
-     file>1
-       actions for (file1)
-    1)diff
-    2)add
-    3)rm
-    4)checkout
-    5)reset
+
+     file> 1
+
+    1) diff
+    2) add
+    3) rm
+    4) checkout
+    5) reset
     6) quit
-     action>1
+
+     action (file1)> 1
     ....
-    + add this
-    - delete that
+    + added this
+    - deleted that
     ....
-     action>2
-     action>6
+
+     action> 2
+
+    1) M  file1
+    2) ?? dir
+    3) quit
+
+     file> 2
+
+    listing files in (dir)
+
+    1) file2
+    2) file3
+    3) quit
+
+     dir> 1
+
+    1) add
+    2) less
+    3) quit
+
+     action> 2
+
+    file2 contains this
+
+     action> 1
+
+    1) M  file1
+    2) A  dir/file2
+    3) ?? dir/file3
+    4) quit
+
+     file> 4
+
     $
 
 ## Contribution

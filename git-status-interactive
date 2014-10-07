@@ -41,8 +41,35 @@
 #TODO: Options for filter results
 #TODO: Options to move around dirs
 
+function doAction() {
+   select ACTION in "${ACTIONS[@]}" "$QUIT"
+   do
+       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
+       then
+           break
+       fi
+       if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
+       then
+           git reset $FILE
+       fi
+       if [ "$ACTION" == "less" ]
+       then
+           $ACTION $FILE
+       else
+           git $ACTION $FILE &>/dev/null
+       fi
+       if ! [[ "$ACTION" =~ "diff" ]]
+       then
+           break
+       fi
+   done
+}
+
 QUIT="quit"
-NORMAL_PROMPT=" files> "
+NORMAL_PROMPT="
+ file> "
+DIR_PROMPT="
+ dir> "
 
 PS3=$NORMAL_PROMPT
 OLDIFS=$IFS
@@ -52,71 +79,71 @@ SELECT_IFS="
 IFS=$SELECT_IFS
 while(true)
 do
-select STATUSLINE in $(git status --porcelain) "$QUIT"
-do
-    IFS=$OLDIFS
-    FILE=$(echo "$STATUSLINE" | cut -c4-)
-    INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
-    WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
-    if [[ "$QUIT" =~ "$REPLY" ]] || [ "$FILE" == "$QUIT" ]
-    then
-        break
-    fi
-
-    if [ -d $FILE ]
-    then
-        echo "   listing files in ($FILE)"
-        PS3=" dir> "
-        select DIRFILE in $(ls -1 $FILE) "$QUIT"
-        do
-            if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
-            then
-                break
-            fi
-            less $FILE/$DIRFILE
-        done
-    else
-        PS3=" action ($FILE)> "
-        ACTIONS=()
-        if [ "$INDEX_STATUS" == "M" ]
-        then
-            ACTIONS+=("checkout")
-            ACTIONS+=("diff --cached")
-            ACTIONS+=("reset")
-        else
-            if [ "$WORKTREE_STATUS" == "M" ]
-            then
-                ACTIONS+=("checkout")
-                ACTIONS+=("diff")
-                ACTIONS+=("add")
-            elif [ "$WORKTREE_STATUS" == "?" ]
-            then
-                ACTIONS+=("add")
-            elif [ "$WORKTREE_STATUS" == "!" ]
-            then
-                #TODO: Show ignore pattern causing this
-                ACTIONS+=("show-ignore")
-            fi
-        fi
-        select ACTION in "${ACTIONS[@]}" "$QUIT"
-        do
-            if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
-            then
-                break
-            fi
-            if [ "$ACTION" == "checkout" ] && [ "$INDEX_STATUS" == "M" ]
-            then
-                git reset $FILE
-            fi
-            git $ACTION $FILE
-            if ! [[ "$ACTION" =~ "diff" ]]
-            then
-                break
-            fi
-        done
-    fi
-    PS3=$NORMAL_PROMPT
-    IFS=$SELECT_IFS
-    break
-done
+   echo
+   select STATUSLINE in $(git status --porcelain) "$QUIT"
+   do
+       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
+       then
+           echo
+           exit 0
+       fi
+       IFS=$OLDIFS
+       FILE=$(echo "$STATUSLINE" | cut -c4-)
+       INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
+       WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
+   
+       echo
+       if [ -d $FILE ]
+       then
+           echo "listing files in ($FILE)"
+           echo
+           PS3=$DIR_PROMPT
+           select DIRFILE in $(ls -1 $FILE) "$QUIT"
+           do
+               if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
+               then
+                   break
+               fi
+               PS3="
+ action ($FILE)> "
+               ACTIONS=()
+               ACTIONS+=("add")
+               ACTIONS+=("less")
+               OLDFILE="$FILE"
+               FILE="$FILE/$DIRFILE"
+               echo
+               doAction
+               FILE="$OLDFILE"
+               break
+           done
+       else
+           PS3="
+ action ($FILE)> "
+           ACTIONS=()
+           if [ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ]
+           then
+               ACTIONS+=("checkout")
+               ACTIONS+=("diff --cached")
+               ACTIONS+=("reset")
+           else
+               if [ "$WORKTREE_STATUS" == "M" ]
+               then
+                   ACTIONS+=("checkout")
+                   ACTIONS+=("diff")
+                   ACTIONS+=("add")
+               elif [ "$WORKTREE_STATUS" == "?" ]
+               then
+                   ACTIONS+=("add")
+               elif [ "$WORKTREE_STATUS" == "!" ]
+               then
+                   #TODO: Show ignore pattern causing this
+                   ACTIONS+=("show-ignore")
+               fi
+           fi
+           doAction
+       fi
+       PS3=$NORMAL_PROMPT
+       IFS=$SELECT_IFS
+       break
+   done
 done
