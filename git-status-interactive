@@ -70,6 +70,31 @@ function doAction() {
    done
 }
 
+function relpath() {
+    source=$1
+    target=$2
+
+    common_part=$source
+    back=
+    while [ "${target#$common_part}" = "${target}" ]; do
+        common_part=$(dirname $common_part)
+        back="../${back}"
+    done
+
+    echo ${back}${target#$common_part/}
+}
+
+function parse_porcelain() {
+   for STATUSLINE in $(git status --porcelain)
+   do
+       STATUS="$(echo "$STATUSLINE" | cut -c-3)"
+       FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
+       FILE=$(relpath "$PWD" "$FILE")
+       echo "${STATUS}${FILE}"
+   done
+}
+
+REPO_DIR=$(git rev-parse --show-toplevel)
 QUIT="quit"
 NORMAL_PROMPT="
  file> "
@@ -85,7 +110,7 @@ IFS=$SELECT_IFS
 while(true)
 do
    echo
-   select STATUSLINE in $(git status --porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') "$QUIT"
+   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') "$QUIT"
    do
        if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
        then
@@ -94,7 +119,7 @@ do
        fi
        IFS=$OLDIFS
        STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
-       FILE=$(echo "$STATUSLINE" | cut -c4-)
+       FILE="$(echo "$STATUSLINE" | cut -c4-)"
        INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
        WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
    
