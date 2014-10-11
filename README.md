@@ -29,6 +29,7 @@ Optional: create an easier alias
     $ cat <<EOF > ~/.gitconfig
     [alias]
         statusi = status-interactive
+        si = status-interactive #short format
     EOF
 
 Use it:
