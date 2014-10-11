@@ -155,12 +155,19 @@ do
            then
                ACTIONS+=("checkout")
                ACTIONS+=("diff --cached")
+               if [ "$WORKTREE_STATUS" == "M" ]
+               then
+                   ACTIONS+=("diff")
+                   ACTIONS+=("add -p")
+                   ACTIONS+=("add")
+               fi
                ACTIONS+=("reset")
            else
                if [ "$WORKTREE_STATUS" == "M" ]
                then
                    ACTIONS+=("checkout")
                    ACTIONS+=("diff")
+                   ACTIONS+=("add -p")
                    ACTIONS+=("add")
                elif [ "$WORKTREE_STATUS" == "?" ]
                then
