@@ -85,14 +85,20 @@ function relpath() {
 }
 
 function parse_porcelain() {
-   for STATUSLINE in $(git status --porcelain)
-   do
-       STATUS="$(echo "$STATUSLINE" | cut -c-3)"
-       FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
-       FILE=$(relpath "$PWD" "$FILE")
-       echo "${STATUS}${FILE}"
-   done
+    for STATUSLINE in $(git status --porcelain)
+    do
+        STATUS="$(echo "$STATUSLINE" | cut -c-3)"
+        FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
+        FILE=$(relpath "$PWD" "$FILE")
+        echo "${STATUS}${FILE}"
+    done
 }
+
+if [ -z $(git status --porcelain) ]
+then
+    echo no changes in repo
+    exit
+fi
 
 REPO_DIR=$(git rev-parse --show-toplevel)
 QUIT="quit"
