@@ -5,13 +5,17 @@
 
 #TODO filter status files
 
-# ' ' = unmodified
-# M = modified
-# A = added
-# D = deleted
-# R = renamed
-# C = copied
-# U = updated but unmerged
+#    X index
+#    Y work tree
+#    -------------------------------------------------
+
+#    ' ' = unmodified
+#     M  = modified
+#     A  = added
+#     D  = deleted
+#     R  = renamed
+#     C  = copied
+#     U  = updated but unmerged
 
 #    X          Y     Meaning
 #    -------------------------------------------------
@@ -168,11 +172,21 @@ do
                    ACTIONS+=("add")
                fi
                ACTIONS+=("reset")
+           elif [ "$INDEX_STATUS" == "D" ]
+           then
+               ACTIONS+=("reset")
+               ACTIONS+=("less")
            else
-               if [ "$WORKTREE_STATUS" == "M" ]
+               if [ "$WORKTREE_STATUS" == "D" ]
+               then
+                   ACTIONS+=("checkout")
+                   ACTIONS+=("rm")
+                   ACTIONS+=("less")
+               elif [ "$WORKTREE_STATUS" == "M" ]
                then
                    ACTIONS+=("checkout")
                    ACTIONS+=("diff")
+                   ACTIONS+=("tdiff")
                    ACTIONS+=("add -p")
                    ACTIONS+=("add")
                elif [ "$WORKTREE_STATUS" == "?" ]
