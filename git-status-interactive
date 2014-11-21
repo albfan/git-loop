@@ -120,23 +120,29 @@ IFS=$SELECT_IFS
 while(true)
 do
    echo
-   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') "$QUIT"
+   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $'\e[35mcommit\e[m' "$QUIT"
    do
-       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
-       then
-           echo
-           exit 0
-       fi
-       IFS=$OLDIFS
-       STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
-       FILE="$(echo "$STATUSLINE" | cut -c4-)"
-       INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
-       WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
+      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
+      then
+         echo
+         exit 0
+      fi
+      IFS=$OLDIFS
+      STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+      if [ $STATUSLINE = "commit" ]
+      then
+         git commit
+         continue
+      fi
+
+      FILE="$(echo "$STATUSLINE" | cut -c4-)"
+      INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
+      WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
    
-       echo
-       if [ -d "$FILE" ]
-       then
-           echo "listing files in ($FILE)"
+      echo
+      if [ -d "$FILE" ]
+      then
+         echo "listing files in ($FILE)"
            echo
            PS3=$DIR_PROMPT
            select DIRFILE in $(ls -1 $FILE) "$QUIT"
