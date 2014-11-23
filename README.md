@@ -15,6 +15,23 @@ in the same way that *git add --interactive* helps with complex addings
 - List files touched or new
 - list files in new directories
 - perform diff, add, rm, reset, checkout on selected files
+- launch global commands (commit, pull, push) without exiting *git status-interactive* loop
+- custom commands an action: Add your favourite commands and alias to loop
+
+```
+$ git config status-interactive.global-command <list of alias>
+$ git config status-interactive.<key>-command <list of alias>
+```
+
+These are mine
+
+```
+[status-interactive]
+   global-command = recommit rework
+   diff-command = tdiff
+```
+
+See my [dotfiles](https://github.com/albfan/dotfiles/blob/master/gitconfig) for explanation of this alias
 
 ## Usage
 
@@ -38,7 +55,10 @@ Use it:
 
     1)  M file1
     2) ?? dir
-    3) quit
+    3) commit
+    4) push
+    5) pull
+    6) quit
 
      file> 1
 
@@ -59,7 +79,10 @@ Use it:
 
     1) M  file1
     2) ?? dir
-    3) quit
+    3) commit
+    4) push
+    5) pull
+    6) quit
 
      file> 2
 
@@ -84,9 +107,12 @@ Use it:
     1) M  file1
     2) A  dir/file2
     3) ?? dir/file3
-    4) quit
+    4) commit
+    5) push
+    6) pull
+    7) quit
 
-     file> 4
+     file> 7  #or type quit
 
     $
 

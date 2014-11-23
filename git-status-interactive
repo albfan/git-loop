@@ -48,60 +48,74 @@
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
    do
-       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
-       then
-           break
-       fi
-       if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
-       then
-           git reset $FILE
-       fi
-       GIT=git
-       if [ "$ACTION" == "less" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
-       then
-           GIT=
-       fi
-       OUT=
-       if ! [[ "$ACTION" =~ "diff" ]]
-       then
-           OUT=&>/dev/null
-       fi
-       $GIT $ACTION $FILE $OUT
-       if ! [[ "$ACTION" =~ "diff" ]]
-       then
-           break
-       fi
+      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
+      then
+         break
+      fi
+      if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
+      then
+         git reset $FILE
+      fi
+      GIT=git
+      if [ "$ACTION" == "less" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
+      then
+         GIT=
+      fi
+      OUT=
+      if ! [[ "$ACTION" =~ "diff" ]]
+      then
+         OUT=&>/dev/null
+      fi
+      $GIT $ACTION $FILE $OUT
+      if ! [[ "$ACTION" =~ "diff" ]]
+      then
+         break
+      fi
    done
 }
 
 function relpath() {
-    source=$1
-    target=$2
+   source=$1
+   target=$2
 
-    common_part=$source
-    back=
-    while [ "${target#$common_part}" = "${target}" ]; do
-        common_part=$(dirname $common_part)
-        back="../${back}"
-    done
+   common_part=$source
+   back=
+   while [ "${target#$common_part}" = "${target}" ]; do
+      common_part=$(dirname $common_part)
+      back="../${back}"
+   done
 
-    echo ${back}${target#$common_part/}
+   echo ${back}${target#$common_part/}
 }
 
 function parse_porcelain() {
-    for STATUSLINE in $(git status --porcelain)
-    do
-        STATUS="$(echo "$STATUSLINE" | cut -c-3)"
-        FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
-        FILE=$(relpath "$PWD" "$FILE")
-        echo "${STATUS}${FILE}"
-    done
+   for STATUSLINE in $(git status --porcelain)
+   do
+      STATUS="$(echo "$STATUSLINE" | cut -c-3)"
+      FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
+      FILE=$(relpath "$PWD" "$FILE")
+      echo "${STATUS}${FILE}"
+   done
+}
+
+function global_commands() {
+   for GLOBAL_COMMAND in commit pull push $(git config --get-regexp status-interactive.global-command | cut -d ' ' -f2-)
+   do
+      echo $'\e[35m'$GLOBAL_COMMAND$'\e[m'
+   done
+}
+
+function custom_actions() {
+   for CUSTOM_ACTION in $(git config --get-regexp status-interactive.$1-command | cut -d ' ' -f2-)
+   do
+      ACTIONS+=($CUSTOM_ACTION)
+   done
 }
 
 if [ -z "$(git status --porcelain)" ]
 then
-    echo no changes in repo
-    exit
+   echo no changes in repo
+   exit
 fi
 
 REPO_DIR=$(git rev-parse --show-toplevel)
@@ -119,8 +133,9 @@ SELECT_IFS="
 while(true)
 do
    echo
+   GLOBAL_COMMANDS=$(global_commands)
    IFS=$SELECT_IFS
-   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $'\e[35mcommit\e[m' $'\e[35mpull\e[m' $'\e[35mpush\e[m' "$QUIT"
+   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $GLOBAL_COMMANDS "$QUIT"
    do
       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
       then
@@ -192,7 +207,7 @@ do
                then
                    ACTIONS+=("checkout")
                    ACTIONS+=("diff")
-                   ACTIONS+=("tdiff")
+                   custom_actions diff
                    ACTIONS+=("add -p")
                    ACTIONS+=("add")
                elif [ "$WORKTREE_STATUS" == "?" ]
