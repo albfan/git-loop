@@ -1,32 +1,30 @@
-# git-status-interactive
+# git-loop
 
-A helping hand to deal with your messy repo
+A helping hand to deal with your messy repo.
 
 ## Intro
 
-**git-status-interactive** is a proof of concept for a desired expansion of *git status*
+**git-loop** is a handy keystroke saving for your git workflow. It starts as an expansion to *git status* performing a *git status --interactive* but quickly become a complete solution for daily workflow.
 
-    $ git status --interactive
-
-in the same way that *git add --interactive* helps with complex addings
+You can easily review your unstaged changes, add, commit, push, pull, with a few keystrokes.
 
 ## Features
 
 - List files touched or new
 - list files in new directories
 - perform diff, add, rm, reset, checkout on selected files
-- launch global commands (commit, pull, push) without exiting *git status-interactive* loop
-- custom commands an action: Add your favourite commands and alias to loop
+- launch global commands (commit, pull, push)
+- custom commands and actions: Add your favourite commands and alias to loop through `loop` section
 
 ```
-$ git config status-interactive.global-command <list of alias>
-$ git config status-interactive.<key>-command <list of alias>
+$ git config loop.global-command <list of alias>
+$ git config loop.<key>-command <list of alias>
 ```
 
 These are mine
 
 ```
-[status-interactive]
+[loop]
    global-command = recommit rework
    diff-command = tdiff
 ```
@@ -39,19 +37,11 @@ Link script to your *PATH*:
 
     $ git clone <repo>
     $ cd <repo>
-    $ ln -s git-interactive-status ~/bin/
-
-Optional: create an easier alias
-    
-    $ cat <<EOF > ~/.gitconfig
-    [alias]
-        statusi = status-interactive
-        si = status-interactive #short format
-    EOF
+    $ ln -s git-loop ~/bin/
 
 Use it:
 
-    $ git status-interactive #or git statusi
+    $ git loop
 
     1)  M file1
     2) ?? dir
@@ -120,5 +110,5 @@ Use it:
 
 This snippet is focus on make your life easier, so any contribution is appreciated. It is evolving by rating "benefit/time" so if you have time, is pretty sure your PR will be accepted. Feel free to open issues or send PR.
 
-By now, read the **TODOs** inside the script to find something useful to work on. Clearly a big step will be to recode script in perl
+By now, read the **TODOs** inside the script to find something useful to work on. Clearly a big step will be to recode script in perl.
 

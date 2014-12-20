@@ -99,14 +99,14 @@ function parse_porcelain() {
 }
 
 function global_commands() {
-   for GLOBAL_COMMAND in commit pull push $(git config --get-regexp status-interactive.global-command | cut -d ' ' -f2-)
+   for GLOBAL_COMMAND in commit pull push $(git config --get-regexp loop.global-command | cut -d ' ' -f2-)
    do
       echo $'\e[35m'$GLOBAL_COMMAND$'\e[m'
    done
 }
 
 function custom_actions() {
-   for CUSTOM_ACTION in $(git config --get-regexp status-interactive.$1-command | cut -d ' ' -f2-)
+   for CUSTOM_ACTION in $(git config --get-regexp loop.$1-command | cut -d ' ' -f2-)
    do
       ACTIONS+=($CUSTOM_ACTION)
    done
