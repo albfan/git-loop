@@ -1,8 +1,5 @@
 #!/bin/bash
 
-#set -x
-#set -v
-
 #TODO filter status files
 
 #    X index
@@ -44,6 +41,20 @@
 #TODO: Options for seeing ignored files
 #TODO: Options for filter results
 #TODO: Options to move around dirs
+
+# debug {{{
+eval SCRIPT_DEBUG="\$$(basename $0 | tr - _)_DEBUG"
+SCRIPT_DEBUG=${SCRIPT_DEBUG:--1}
+
+if [ "$SCRIPT_DEBUG" -ge 1 ]
+then
+   set -x
+fi
+if [ "$SCRIPT_DEBUG" -ge 10 ]
+then
+   set -v
+fi
+#}}}
 
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
