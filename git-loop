@@ -152,6 +152,16 @@ do
          echo
          exit 0
       fi
+      if [ "$STATUSLINE" = "" ]
+      then
+         if [[ "$REPLY" =~ "!" ]]
+         then
+            eval ${REPLY:1}
+         else
+            echo unknow \"$REPLY\" option
+         fi
+         break
+      fi
       IFS=$OLDIFS
       STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
       if [ "$STATUSLINE" = "commit" ] || [ "$STATUSLINE" = "pull" ] || [ "$STATUSLINE" = "push" ]
