@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#TODO filter status files
-
+# info {{{
 #    X index
 #    Y work tree
 #    -------------------------------------------------
@@ -37,10 +36,13 @@
 #    ?           ?    untracked
 #    !           !    ignored
 #    -------------------------------------------------
+# }}}
 
-#TODO: Options for seeing ignored files
-#TODO: Options for filter results
+# TODOs {{{
+#TODO: Options to see ignored files
+#TODO: Options to filter results
 #TODO: Options to move around dirs
+# }}}
 
 # debug {{{
 eval SCRIPT_DEBUG="\$$(basename $0 | tr - _)_DEBUG"
@@ -56,6 +58,7 @@ then
 fi
 #}}}
 
+# functions {{{
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
    do
@@ -122,6 +125,7 @@ function custom_actions() {
       ACTIONS+=($CUSTOM_ACTION)
    done
 }
+#}}}
 
 if [ -z "$(git status --porcelain)" ]
 then
@@ -129,6 +133,7 @@ then
    exit
 fi
 
+# exec {{{
 REPO_DIR=$(git rev-parse --show-toplevel)
 QUIT="quit"
 NORMAL_PROMPT="
@@ -238,3 +243,6 @@ do
        break
    done
 done
+# }}}
+
+# vim: fdm=marker
