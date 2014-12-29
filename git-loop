@@ -127,12 +127,6 @@ function custom_actions() {
 }
 #}}}
 
-if [ -z "$(git status --porcelain)" ]
-then
-   echo no changes in repo
-   exit
-fi
-
 # exec {{{
 REPO_DIR=$(git rev-parse --show-toplevel)
 QUIT="quit"
