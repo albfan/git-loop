@@ -89,26 +89,35 @@ function doAction() {
 }
 
 function relpath() {
-   source=$1
-   target=$2
-
-   common_part=$source
-   back=
-   while [ "${target#$common_part}" = "${target}" ]; do
-      common_part=$(dirname $common_part)
+   local actualdir="$1"
+   local rel_file="$2"
+   local abs_file="$3"
+   local common_part="$actualdir"
+   local back=
+   local dir_diff=
+   while [ "${abs_file#$common_part/}" != "${rel_file}" ]
+   do
+      local dir_up=$(dirname $common_part)
+      dir_diff="${common_part#$dir_up/}"
+      if [ "$dir_diff/${abs_file#$common_part/}" = "${rel_file}" ]
+      then
+         break
+      fi
+      common_part=$dir_up
       back="../${back}"
    done
 
-   echo ${back}${target#$common_part/}
+   echo ${back}${abs_file#$common_part/}
 }
 
 function parse_porcelain() {
    for STATUSLINE in $(git status --porcelain)
    do
-      STATUS="$(echo "$STATUSLINE" | cut -c-3)"
-      FILE="$REPO_DIR/$(echo "$STATUSLINE" | cut -c4-)"
-      FILE=$(relpath "$PWD" "$FILE")
-      echo "${STATUS}${FILE}"
+      STATUS="$(echo "$STATUSLINE" | cut -c-2)"
+      RELFILE=$(echo "$STATUSLINE" | cut -c4-)
+      ABSFILE="$REPO_DIR/$RELFILE"
+      FILE=$(relpath "$(pwd)" "$RELFILE" "$ABSFILE")
+      echo "${STATUS} ${FILE}"
    done
 }
 

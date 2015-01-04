@@ -15,6 +15,7 @@ You can easily review your unstaged changes, add, commit, push, pull, with a few
 - perform diff, add, rm, reset, checkout on selected files
 - launch global commands (commit, pull, push)
 - custom commands and actions: Add your favourite commands and alias to loop through `loop` section
+- works on subdirs
 
 ```
 $ git config loop.global-command <list of alias>
