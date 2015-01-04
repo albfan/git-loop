@@ -135,7 +135,6 @@ NORMAL_PROMPT="
 DIR_PROMPT="
  dir> "
 
-PS3=$NORMAL_PROMPT
 OLDIFS=$IFS
 SELECT_IFS="
 "
@@ -144,6 +143,7 @@ while(true)
 do
    echo
    GLOBAL_COMMANDS=$(global_commands)
+   PS3=$NORMAL_PROMPT
    IFS=$SELECT_IFS
    select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $GLOBAL_COMMANDS "$QUIT"
    do
@@ -243,7 +243,6 @@ do
            fi
            doAction
        fi
-       PS3=$NORMAL_PROMPT
        break
    done
 done
