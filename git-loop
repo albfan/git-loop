@@ -244,67 +244,67 @@ do
             else
                if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
                then
-                   break
+                  break
                fi
             fi
             PS3="
  action ($FILE)> "
-               ACTIONS=()
-               ACTIONS+=("add")
-               ACTIONS+=("less")
-               OLDFILE="$FILE"
-               FILE="$FILE/$DIRFILE"
-               echo
-               doAction
-               FILE="$OLDFILE"
-               break
-           done
-       else
-           PS3="
+            ACTIONS=()
+            ACTIONS+=("add")
+            ACTIONS+=("less")
+            OLDFILE="$FILE"
+            FILE="$FILE/$DIRFILE"
+            echo
+            doAction
+            FILE="$OLDFILE"
+            break
+         done
+      else
+         PS3="
  action ($FILE)> "
-           ACTIONS=()
-           if [ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ]
-           then
+         ACTIONS=()
+         if [ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ]
+         then
+            ACTIONS+=("checkout")
+            ACTIONS+=("diff --cached")
+            if [ "$WORKTREE_STATUS" == "M" ]
+            then
+               ACTIONS+=("diff")
+               ACTIONS+=("add -p")
+               ACTIONS+=("add")
+            fi
+            ACTIONS+=("reset")
+         elif [ "$INDEX_STATUS" == "D" ]
+         then
+            ACTIONS+=("reset")
+            ACTIONS+=("less")
+         else
+            if [ "$WORKTREE_STATUS" == "D" ]
+            then
                ACTIONS+=("checkout")
-               ACTIONS+=("diff --cached")
-               if [ "$WORKTREE_STATUS" == "M" ]
-               then
-                   ACTIONS+=("diff")
-                   ACTIONS+=("add -p")
-                   ACTIONS+=("add")
-               fi
-               ACTIONS+=("reset")
-           elif [ "$INDEX_STATUS" == "D" ]
-           then
-               ACTIONS+=("reset")
+               ACTIONS+=("rm")
                ACTIONS+=("less")
-           else
-               if [ "$WORKTREE_STATUS" == "D" ]
-               then
-                   ACTIONS+=("checkout")
-                   ACTIONS+=("rm")
-                   ACTIONS+=("less")
-               elif [ "$WORKTREE_STATUS" == "M" ]
-               then
-                   ACTIONS+=("checkout")
-                   ACTIONS+=("diff")
-                   custom_actions diff
-                   ACTIONS+=("add -p")
-                   ACTIONS+=("add")
-               elif [ "$WORKTREE_STATUS" == "?" ]
-               then
-                   ACTIONS+=("add")
-                   ACTIONS+=("rm")
-                   ACTIONS+=("less")
-               elif [ "$WORKTREE_STATUS" == "!" ]
-               then
-                   #TODO: Show ignore pattern causing this
-                   ACTIONS+=("show-ignore")
-               fi
-           fi
-           doAction
-       fi
-       break
+            elif [ "$WORKTREE_STATUS" == "M" ]
+            then
+               ACTIONS+=("checkout")
+               ACTIONS+=("diff")
+               custom_actions diff
+               ACTIONS+=("add -p")
+               ACTIONS+=("add")
+            elif [ "$WORKTREE_STATUS" == "?" ]
+            then
+               ACTIONS+=("add")
+               ACTIONS+=("rm")
+               ACTIONS+=("less")
+            elif [ "$WORKTREE_STATUS" == "!" ]
+            then
+               #TODO: Show ignore pattern causing this
+               ACTIONS+=("show-ignore")
+            fi
+         fi
+         doAction
+      fi
+      break
    done
 done
 # }}}
