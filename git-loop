@@ -62,17 +62,9 @@ fi
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
    do
-      if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
       then
-         if [ "$REPLY" == "$QUIT" ] || [ "$ACTION" == "$QUIT" ]
-         then
-            break
-         fi
-      else
-         if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
-         then
-            break
-         fi
+         break
       fi
       if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
       then
@@ -84,30 +76,17 @@ function doAction() {
          GIT=
       fi
       OUT=
-      if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+      if ! [[ "$ACTION" =~ "diff" ]]
       then
-         if ! [ "$ACTION" == "diff" ] || [ "$ACTION" == "diff --cached" ]
+         OUT=&>/dev/null
          then
-            OUT=&>/dev/null
          fi
       else
-         if ! [[ "$ACTION" =~ "diff" ]]
-         then
-            OUT=&>/dev/null
-         fi
       fi
-      $GIT $ACTION $FILE $OUT
-      if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+      $GIT $ACTION $f $OUT
+      if ! [[ "$ACTION" =~ "diff" ]]
       then
-         if ! [ "$ACTION" == "diff" ] || [ "$ACTION" == "diff --cached" ]
-         then
-            break
-         fi
-      else
-         if ! [[ "$ACTION" =~ "diff" ]]
-         then
-            break
-         fi
+         break
       fi
    done
 }
@@ -162,11 +141,6 @@ function custom_actions() {
 
 # exec {{{
 REPO_DIR=$(git rev-parse --show-toplevel)
-if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
-then
-   REPO_DIR=$(echo "$REPO_DIR" |tr [A-Z] [a-z])
-   REPO_DIR="/$(echo $REPO_DIR |cut -c1)$(echo $REPO_DIR|cut -c3-)"
-fi
 QUIT="quit"
 NORMAL_PROMPT="
  file> "
@@ -185,35 +159,20 @@ do
    IFS=$SELECT_IFS
    select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $GLOBAL_COMMANDS "$QUIT"
    do
-      if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
       then
-         if [ "$QUIT" == "$REPLY" ] || [ "$STATUSLINE" == "$QUIT" ]
-         then
-            echo
-            exit 0
-         fi
-      else
-         if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
-         then
-            echo
-            exit 0
-         fi
+         echo
+         exit 0
       fi
       if [ "$STATUSLINE" = "" ]
       then
-         if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+         if [[ "$REPLY" =~ "!" ]]
          then
-            #TODO: Detect ! on windows to execute
             eval ${REPLY:1}
          else
-            if [[ "$REPLY" =~ "!" ]]
-            then
-               eval ${REPLY:1}
-            else
-               echo unknow \"$REPLY\" option
-            fi
-            break
+            echo unknow \"$REPLY\" option
          fi
+         break
       fi
       IFS=$OLDIFS
       STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
@@ -235,17 +194,9 @@ do
          PS3=$DIR_PROMPT
          select DIRFILE in $(ls -1 $FILE) "$QUIT"
          do
-            if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "win32" ]
+            if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
             then
-               if [ "$QUIT" == "$REPLY" ] || [ "$DIRFILE" == "$QUIT" ]
-               then
-                  break
-               fi
-            else
-               if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
-               then
-                  break
-               fi
+               break
             fi
             PS3="
  action ($FILE)> "
