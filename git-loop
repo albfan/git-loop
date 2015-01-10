@@ -73,6 +73,7 @@ function doAction() {
          continue
       fi
       local f="$FILE"
+      local a="$ACTION"
       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
       then
          break
@@ -88,10 +89,10 @@ function doAction() {
       fi
       if [ "$ACTION" == "edit" ]
       then
-         ACTION="$(git config --get loop.editor)"
-         if [ -z "$ACTION" ]
+         a="$(git config --get loop.editor)"
+         if [ -z "$a" ]
          then
-            ACTION="vim"
+            a="vim"
          fi
       fi
       OUT=
@@ -105,8 +106,8 @@ function doAction() {
             f="-M -- ${f/ -> / }"
          fi
       fi
-      $GIT $ACTION $f $OUT
-      if ! [[ "$ACTION" =~ "diff" ]]
+      $GIT $a $f $OUT
+      if ! [[ "$ACTION" =~ "diff" ]] && ! [ "$ACTION" == "add -p" ] && ! [ "$ACTION" == "edit" ]
       then
          break
       fi
