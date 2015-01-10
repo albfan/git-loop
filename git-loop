@@ -62,6 +62,16 @@ fi
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
    do
+      if [ "$ACTION" = "" ]
+      then
+         if [[ "$REPLY" =~ "!" ]]
+         then
+            eval ${REPLY:1}
+         else
+            echo unknow \"$REPLY\" option
+         fi
+         continue
+      fi
       local f="$FILE"
       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
       then
