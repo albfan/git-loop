@@ -82,9 +82,17 @@ function doAction() {
          git reset $FILE
       fi
       GIT=git
-      if [ "$ACTION" == "less" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
+      if [ "$ACTION" == "less" ] || [ "$ACTION" == "edit" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
       then
          GIT=
+      fi
+      if [ "$ACTION" == "edit" ]
+      then
+         ACTION="$(git config --get loop.editor)"
+         if [ -z "$ACTION" ]
+         then
+            ACTION="vim"
+         fi
       fi
       OUT=
       if ! [[ "$ACTION" =~ "diff" ]]
@@ -228,6 +236,7 @@ do
          PS3="
  action ($FILE)> "
          ACTIONS=()
+         ACTIONS+=("edit")
          if [ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ] || [ "$INDEX_STATUS" == "R" ]
          then
             ACTIONS+=("checkout")
