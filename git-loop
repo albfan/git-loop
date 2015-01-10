@@ -62,6 +62,12 @@ fi
 function doAction() {
    select ACTION in "${ACTIONS[@]}" "$QUIT"
    do
+      local f="$FILE"
+      local a="$ACTION"
+      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
+      then
+         break
+      fi
       if [ "$ACTION" = "" ]
       then
          if [[ "$REPLY" =~ "!" ]]
@@ -71,12 +77,6 @@ function doAction() {
             echo unknow \"$REPLY\" option
          fi
          continue
-      fi
-      local f="$FILE"
-      local a="$ACTION"
-      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
-      then
-         break
       fi
       if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
       then
