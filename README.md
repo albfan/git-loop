@@ -2,6 +2,8 @@
 
 A helping hand to deal with your messy repo.
 
+![git loop screencast](etc/git-loop-screencast.gif)
+
 ## Intro
 
 **git-loop** is a handy keystroke saving for your git workflow. It starts as an expansion to *git status* performing a *git status --interactive* but quickly become a complete solution for daily workflow.
@@ -32,6 +34,17 @@ These are mine
 
 See my [dotfiles](https://github.com/albfan/dotfiles/blob/master/gitconfig) for explanation of this alias
 
+## Config
+
+You can customize the editor and pager
+
+*Showing the default values*
+```
+[loop]
+   editor = vim
+   pager = less
+```
+
 ## Usage
 
 Link script to your *PATH*:
@@ -49,7 +62,8 @@ Use it:
     3) commit
     4) push
     5) pull
-    6) quit
+    6) clear
+    7) quit
 
      file> 1
 
@@ -58,7 +72,8 @@ Use it:
     3) rm
     4) checkout
     5) reset
-    6) quit
+    6) clear
+    7) quit
 
      action (file1)> 1
     ....
@@ -73,7 +88,8 @@ Use it:
     3) commit
     4) push
     5) pull
-    6) quit
+    6) clear
+    7) quit
 
      file> 2
 
@@ -81,17 +97,19 @@ Use it:
 
     1) file2
     2) file3
-    3) quit
+    3) clear
+    4) quit
 
      dir> 1
 
     1) add
     2) less
-    3) quit
+    3) clear
+    4) quit
 
      action> 2
 
-    file2 contains this
+     file2 contains this
 
      action> 1
 
@@ -101,7 +119,8 @@ Use it:
     4) commit
     5) push
     6) pull
-    7) quit
+    7) clear
+    8) quit
 
      file> 7  #or type quit
 
