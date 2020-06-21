@@ -60,34 +60,57 @@ fi
 
 # functions {{{
 function doAction() {
-   select ACTION in "${ACTIONS[@]}" "$QUIT"
+   select ACTION in "${ACTIONS[@]}" $(output_sub_general_commands)
    do
+      ACTION=$(echo "$ACTION" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
       local f="$FILE"
       local a="$ACTION"
-      if [[ "$QUIT" =~ "$REPLY" ]] || [ "$ACTION" == "$QUIT" ]
+      if [[ "$BACK" =~ "$REPLY" ]] || [ "$a" == "$BACK" ]
       then
          break
       fi
-      if [ "$ACTION" = "" ]
+      if [[ "$CLEAR" =~ "$REPLY" ]] || [ "$a" == "$CLEAR" ]
+      then
+         clear
+         continue
+      fi
+      if [ "$a" = "" ]
       then
          if [[ "$REPLY" =~ "!" ]]
          then
             eval ${REPLY:1}
+            continue
+         elif [[ "${ACTIONS[@]}" =~ "$REPLY" ]]
+         then
+            a="$REPLY"
          else
             echo unknow \"$REPLY\" option
+            continue
          fi
-         continue
       fi
-      if [ "$ACTION" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
+      if [ "$a" == "checkout" ] && ([ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ])
       then
          git reset $FILE
       fi
       GIT=git
-      if [ "$ACTION" == "less" ] || [ "$ACTION" == "edit" ] || ([ "$ACTION" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
+      STOP=0
+      if ! [[ "$a" =~ "diff" ]] && ! [ "$a" == "add -p" ] && ! [ "$a" == "edit" ] && ! [ "$a" == "$LESS" ]
+      then
+         STOP=1
+      fi
+      if [ "$a" == "$LESS" ] || [ "$a" == "edit" ] || ([ "$a" == "rm" ] && [ "$INDEX_STATUS" == "?" ])
       then
          GIT=
       fi
-      if [ "$ACTION" == "edit" ]
+      if [ "$a" == "$LESS" ]
+      then
+         a="$(git config --get loop.pager)"
+         if [ -z "$a" ]
+         then
+            a="less"
+         fi
+      fi
+      if [ "$a" == "edit" ]
       then
          a="$(git config --get loop.editor)"
          if [ -z "$a" ]
@@ -96,7 +119,7 @@ function doAction() {
          fi
       fi
       OUT=
-      if ! [[ "$ACTION" =~ "diff" ]]
+      if ! [[ "$a" =~ "diff" ]]
       then
          OUT=&>/dev/null
          f="${f#* -> }"
@@ -107,7 +130,8 @@ function doAction() {
          fi
       fi
       $GIT $a $f $OUT
-      if ! [[ "$ACTION" =~ "diff" ]] && ! [ "$ACTION" == "add -p" ] && ! [ "$ACTION" == "edit" ]
+
+      if [ $STOP == 1 ]
       then
          break
       fi
@@ -148,23 +172,52 @@ function parse_porcelain() {
 }
 
 function global_commands() {
-   for GLOBAL_COMMAND in commit pull push $(git config --get-regexp loop.global-command | cut -d ' ' -f2-)
+   GLOBAL_COMMANDS_ARRAY=(commit pull push $(git config --get loop.global-command))
+}
+
+function output_global_commands() {
+   for GLOBAL_COMMAND in ${GLOBAL_COMMANDS_ARRAY[@]}
    do
       echo $'\e[35m'$GLOBAL_COMMAND$'\e[m'
    done
 }
 
 function custom_actions() {
-   for CUSTOM_ACTION in $(git config --get-regexp loop.$1-command | cut -d ' ' -f2-)
+   for CUSTOM_ACTION in $(git config --get loop.$1-command)
    do
       ACTIONS+=($CUSTOM_ACTION)
+   done
+}
+
+function general_commands() {
+   GENERAL_COMMANDS_ARRAY=("$CLEAR" "$QUIT")
+}
+
+function output_general_commands() {
+   for GENERAL_COMMAND in ${GENERAL_COMMANDS_ARRAY[@]}
+   do
+      echo $'\e[33m'$GENERAL_COMMAND$'\e[m'
+   done
+}
+
+function sub_general_commands() {
+   SUB_GENERAL_COMMANDS_ARRAY=("$CLEAR" "$BACK")
+}
+
+function output_sub_general_commands() {
+   for SUB_GENERAL_COMMAND in ${SUB_GENERAL_COMMANDS_ARRAY[@]}
+   do
+      echo $'\e[33m'$SUB_GENERAL_COMMAND$'\e[m'
    done
 }
 #}}}
 
 # exec {{{
 REPO_DIR=$(git rev-parse --show-toplevel)
+CLEAR="clear"
 QUIT="quit"
+BACK="back"
+LESS="less"
 NORMAL_PROMPT="
  file> "
 DIR_PROMPT="
@@ -177,28 +230,40 @@ SELECT_IFS="
 while(true)
 do
    echo
-   GLOBAL_COMMANDS=$(global_commands)
+   global_commands
+   general_commands
+   sub_general_commands
    PS3=$NORMAL_PROMPT
    IFS=$SELECT_IFS
-   select STATUSLINE in $(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/') $GLOBAL_COMMANDS "$QUIT"
+   STATUSFILES=$(parse_porcelain | sed '/^M \|^A \|^D \|^R \|^C /s/.*/\x1b[32m&\x1b[m/;/^ M\|^ D/s/.*/\x1b[31m&\x1b[m/;/^MM/s/.*/\x1b[33m&\x1b[m/;/^??/s/.*/\x1b[34m&\x1b[m/')
+   select STATUSLINE in $STATUSFILES $(output_global_commands) $(output_general_commands)
    do
+      STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
       if [[ "$QUIT" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$QUIT" ]
       then
          echo
          exit 0
+      fi
+      if [[ "$CLEAR" =~ "$REPLY" ]] || [ "$STATUSLINE" == "$CLEAR" ]
+      then
+         clear
+         continue
       fi
       if [ "$STATUSLINE" = "" ]
       then
          if [[ "$REPLY" =~ "!" ]]
          then
             eval ${REPLY:1}
+         elif [[ "${GLOBAL_COMMANDS_ARRAY[@]}" =~ "$REPLY" ]]
+         then
+           git $REPLY
+           break
          else
             echo unknow \"$REPLY\" option
          fi
          break
       fi
       IFS=$OLDIFS
-      STATUSLINE=$(echo "$STATUSLINE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
       if [ "$STATUSLINE" = "commit" ] || [ "$STATUSLINE" = "pull" ] || [ "$STATUSLINE" = "push" ]
       then
          git $STATUSLINE
@@ -208,24 +273,30 @@ do
       FILE="$(echo "$STATUSLINE" | cut -c4-)"
       INDEX_STATUS=$(echo "$STATUSLINE" | cut -c1)
       WORKTREE_STATUS=$(echo "$STATUSLINE" | cut -c2)
-   
+
       echo
       if [ -d "$FILE" ]
       then
          echo "listing files in ($FILE)"
          echo
          PS3=$DIR_PROMPT
-         select DIRFILE in $(ls -1 $FILE) "$QUIT"
+         select DIRFILE in $(ls -1 $FILE) $(output_sub_general_commands)
          do
-            if [[ "$QUIT" =~ "$REPLY" ]] || [ "$DIRFILE" == "$QUIT" ]
+            DIRFILE=$(echo "$DIRFILE" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+            if [[ "$BACK" =~ "$REPLY" ]] || [ "$DIRFILE" == "$BACK" ]
             then
                break
+            fi
+            if [[ "$CLEAR" =~ "$REPLY" ]] || [ "$DIRFILE" == "$CLEAR" ]
+            then
+               clear
+               continue
             fi
             PS3="
  action ($FILE)> "
             ACTIONS=()
             ACTIONS+=("add")
-            ACTIONS+=("less")
+            ACTIONS+=("$LESS")
             OLDFILE="$FILE"
             FILE="$FILE/$DIRFILE"
             echo
@@ -238,6 +309,7 @@ do
  action ($FILE)> "
          ACTIONS=()
          ACTIONS+=("edit")
+         ACTIONS+=("$LESS")
          if [ "$INDEX_STATUS" == "M" ] || [ "$INDEX_STATUS" == "A" ] || [ "$INDEX_STATUS" == "R" ]
          then
             ACTIONS+=("checkout")
@@ -252,13 +324,11 @@ do
          elif [ "$INDEX_STATUS" == "D" ]
          then
             ACTIONS+=("reset")
-            ACTIONS+=("less")
          else
             if [ "$WORKTREE_STATUS" == "D" ]
             then
                ACTIONS+=("checkout")
                ACTIONS+=("rm")
-               ACTIONS+=("less")
             elif [ "$WORKTREE_STATUS" == "M" ]
             then
                ACTIONS+=("checkout")
@@ -270,7 +340,6 @@ do
             then
                ACTIONS+=("add")
                ACTIONS+=("rm")
-               ACTIONS+=("less")
             elif [ "$WORKTREE_STATUS" == "!" ]
             then
                #TODO: Show ignore pattern causing this
@@ -284,4 +353,4 @@ do
 done
 # }}}
 
-# vim: fdm=marker
+# vim: fdm=marker:ts=3:sw=3:et
